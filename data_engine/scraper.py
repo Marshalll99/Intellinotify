@@ -40,7 +40,10 @@ def scrap(url):
         html_doc = response.content
         soup = BeautifulSoup(html_doc, 'html.parser')
         data = soup.find_all('content', style="color:#012B55")
-        print (data)
+        for item in data:
+            print ( item.text)
         return "Scraped and saved notifications from NTA"
+        # print (data)
+        # return "Scraped and saved notifications from NTA"
     
 scrap("https://www.nta.ac.in/NoticeBoardArchive")
