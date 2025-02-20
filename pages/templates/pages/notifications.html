@@ -1,32 +1,35 @@
 {% extends 'pages/base.html' %}
+{% load static %}
 
 {% block title %}Notifications - My Project{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-6 py-8 max-w-3xl">
+<div class="container mx-auto px-6 py-8 max-w-4xl">
   <h1 class="text-3xl font-bold mb-8 text-center">Your Notifications</h1>
-  <div class="space-y-4">
-    <!-- Notification Card 1 -->
-    <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-semibold">New Message Received</h2>
-        <span class="text-sm text-gray-500">2 hours ago</span>
+  
+  {% if grouped_notifications %}
+    {% for base_url, notifications in grouped_notifications.items %}
+      <div class="mb-10">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">{{ base_url }}</h2>
+        <div class="space-y-4">
+          {% for notification in notifications %}
+            <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
+              <div class="flex justify-between items-center">
+                <h3 class="text-xl font-semibold">{{ notification.title }}</h3>
+                <span class="text-sm text-gray-500">{{ notification.created_at|timesince }} ago</span>
+              </div>
+              <p class="mt-2 text-gray-700">
+                <a href="{{ notification.url }}" class="text-blue-600 hover:underline">
+                  View Details
+                </a>
+              </p>
+            </div>
+          {% endfor %}
+        </div>
       </div>
-      <p class="mt-2 text-gray-700">
-        You have a new message from John Doe. Click here to read it.
-      </p>
-    </div>
-    <!-- Notification Card 2 -->
-    <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-semibold">Update Available</h2>
-        <span class="text-sm text-gray-500">1 day ago</span>
-      </div>
-      <p class="mt-2 text-gray-700">
-        A new update for your project is available. Please review the changes.
-      </p>
-    </div>
-    <!-- Additional notifications can be added in similar card layout -->
-  </div>
+    {% endfor %}
+  {% else %}
+    <p class="text-center text-gray-600">No notifications found.</p>
+  {% endif %}
 </div>
 {% endblock %}
