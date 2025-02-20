@@ -1,0 +1,24 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}Home - My Project{% endblock %}
+
+{% block content %}
+<section class="text-center">
+  <h1 class="text-4xl font-bold mb-4">Welcome to My Project</h1>
+  <p class="text-lg mb-6">A beautifully designed project built with Django and Tailwind CSS.</p>
+  <a href="{% url 'signup' %}" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">Get Started</a>
+</section>
+
+<section class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+  <!-- Example feature cards -->
+  <div class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+    <h2 class="text-2xl font-semibold mb-2">Feature One</h2>
+    <p>Detail about feature one. It’s clean, efficient, and elegant.</p>
+  </div>
+  <div class="bg-white p-6 rounded shadow hover:shadow-lg transition">
+    <h2 class="text-2xl font-semibold mb-2">Feature Two</h2>
+    <p>Detail about feature two. Enjoy seamless integration and dynamic content.</p>
+  </div>
+  <!-- Add more features as needed -->
+</section>
+{% endblock %}

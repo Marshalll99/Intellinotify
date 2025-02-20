@@ -22,10 +22,10 @@ def scrap(url):
         
         
         response = requests.post(url, data=form_data)
-        print("Response Content (first 500 chars):", response.content[:500])  # Print preview of response content
-        print(f"Status Code: {response.status_code}")
-        print(f"Response Headers: {response.headers}")
-        print(f"Response Content (first 1000 chars): {response.content[:1000]}")
+        # print("Response Content (first 500 chars):", response.content[:500])  # Print preview of response content
+        # print(f"Status Code: {response.status_code}")
+        # print(f"Response Headers: {response.headers}")
+        # print(f"Response Content (first 1000 chars): {response.content[:1000]}")
         html_doc = response.content
         soup = BeautifulSoup(html_doc, 'html.parser')
         
