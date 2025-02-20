@@ -1,47 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}My Project{% endblock %}</title>
-  {% load static %}
-  <!-- Link to the compiled Tailwind CSS -->
-  <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
-</head>
-<body class="bg-gray-50 text-gray-900">
-  <!-- Header / Navigation -->
-  <header class="bg-white shadow">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <!-- Logo -->
-      <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">MyProjectLogo</a>
-      <!-- Navigation Menu -->
-      <nav>
-        <ul class="flex space-x-4">
-          <li><a href="{% url 'home' %}" class="hover:text-blue-600">Home</a></li>
-          <li><a href="{% url 'notifications' %}" class="hover:text-blue-600">Notifications</a></li>
-          <!-- Add more links as needed -->
-        </ul>
-      </nav>
-      <!-- Auth Links -->
-      <div>
-        <a href="{% url 'signup' %}" class="mr-4 hover:text-blue-600">Sign Up</a>
-        <a href="{% url 'signin' %}" class="hover:text-blue-600">Sign In</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}My Project{% endblock %}</title>
+    {% load static %}
+    <!-- Link to your compiled Tailwind CSS -->
+    <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet" />
+  </head>
+  <body class="bg-gradient-to-br from-gray-50 to-white text-gray-800">
+    <!-- Header / Navigation -->
+    <header class="bg-white shadow-md">
+      <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="{% url 'home' %}" class="text-3xl font-bold text-blue-600">
+          MyProjectLogo
+        </a>
+        <!-- Navigation Menu -->
+        <nav class="space-x-6">
+          <a href="{% url 'home' %}" class="text-lg hover:text-blue-600 transition duration-300">Home</a>
+          <a href="{% url 'notifications' %}" class="text-lg hover:text-blue-600 transition duration-300">Notifications</a>
+        </nav>
+        <!-- Auth Links -->
+        <div class="space-x-4">
+          <a href="{% url 'signup' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign Up</a>
+          <a href="{% url 'signin' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign In</a>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Content Area -->
-  <main class="container mx-auto px-4 py-8">
-    {% block content %}
-    <!-- Content from extending templates will appear here -->
-    {% endblock %}
-  </main>
+    <!-- Main Content Area -->
+    <main class="container mx-auto px-6 py-8">
+      {% block content %}
+      {% endblock %}
+    </main>
 
-  <!-- Footer -->
-  <footer class="bg-gray-200">
-    <div class="container mx-auto px-4 py-4 text-center text-sm">
-      &copy; {{ current_year|default:2025 }} My Project. All rights reserved.
-    </div>
-  </footer>
-</body>
+    <!-- Footer -->
+    <footer class="bg-gray-100">
+      <div class="container mx-auto px-6 py-4 text-center text-gray-600 text-sm">
+        &copy; {{ current_year|default:2025 }} My Project. All rights reserved.
+      </div>
+    </footer>
+
+    <!-- Optional: Include AlpineJS for interactivity -->
+    <script src="https://unpkg.com/alpinejs" defer></script>
+  </body>
 </html>

@@ -1,0 +1,23 @@
+{% extends 'pages/base.html' %}
+
+{% block title %}Notifications - My Project{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-3xl font-bold mb-6">Your Notifications</h1>
+  <!-- Example notification list -->
+  <ul class="space-y-4">
+    <li class="bg-white p-4 rounded shadow">
+      <p class="font-medium">Notification Title 1</p>
+      <p class="text-sm text-gray-600">This is a brief description of notification one.</p>
+      <span class="text-xs text-gray-500">2 hours ago</span>
+    </li>
+    <li class="bg-white p-4 rounded shadow">
+      <p class="font-medium">Notification Title 2</p>
+      <p class="text-sm text-gray-600">This is a brief description of notification two.</p>
+      <span class="text-xs text-gray-500">1 day ago</span>
+    </li>
+    <!-- More notifications can be dynamically rendered here -->
+  </ul>
+</div>
+{% endblock %}

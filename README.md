@@ -9,13 +9,13 @@
 1. Create virtual env:
 
 ```bash
-python -m venv venv
+python3 -m venv .venv
 ```
 
 2. Activate virtual env: (using vscode bottom bar):
 
 ```bash
-source venv/bin/activate
+source .venv/bin/activate
 ```
 
 3. Install django:

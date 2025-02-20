@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}My Project{% endblock %}</title>
+  {% load static %}
+  <!-- Link to the compiled Tailwind CSS -->
+  <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <!-- Header / Navigation -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <!-- Logo -->
+      <a href="{% url 'home' %}" class="text-xl font-bold text-blue-600">MyProjectLogo</a>
+      <!-- Navigation Menu -->
+      <nav>
+        <ul class="flex space-x-4">
+          <li><a href="{% url 'home' %}" class="hover:text-blue-600">Home</a></li>
+          <li><a href="{% url 'notifications' %}" class="hover:text-blue-600">Notifications</a></li>
+          <!-- Add more links as needed -->
+        </ul>
+      </nav>
+      <!-- Auth Links -->
+      <div>
+        <a href="{% url 'signup' %}" class="mr-4 hover:text-blue-600">Sign Up</a>
+        <a href="{% url 'signin' %}" class="hover:text-blue-600">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="container mx-auto px-4 py-8">
+    {% block content %}
+    <!-- Content from extending templates will appear here -->
+    {% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-200">
+    <div class="container mx-auto px-4 py-4 text-center text-sm">
+      &copy; {{ current_year|default:2025 }} My Project. All rights reserved.
+    </div>
+  </footer>
+</body>
+</html>

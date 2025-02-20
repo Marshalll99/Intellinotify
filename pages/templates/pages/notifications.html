@@ -3,21 +3,30 @@
 {% block title %}Notifications - My Project{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-  <h1 class="text-3xl font-bold mb-6">Your Notifications</h1>
-  <!-- Example notification list -->
-  <ul class="space-y-4">
-    <li class="bg-white p-4 rounded shadow">
-      <p class="font-medium">Notification Title 1</p>
-      <p class="text-sm text-gray-600">This is a brief description of notification one.</p>
-      <span class="text-xs text-gray-500">2 hours ago</span>
-    </li>
-    <li class="bg-white p-4 rounded shadow">
-      <p class="font-medium">Notification Title 2</p>
-      <p class="text-sm text-gray-600">This is a brief description of notification two.</p>
-      <span class="text-xs text-gray-500">1 day ago</span>
-    </li>
-    <!-- More notifications can be dynamically rendered here -->
-  </ul>
+<div class="container mx-auto px-6 py-8 max-w-3xl">
+  <h1 class="text-3xl font-bold mb-8 text-center">Your Notifications</h1>
+  <div class="space-y-4">
+    <!-- Notification Card 1 -->
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">New Message Received</h2>
+        <span class="text-sm text-gray-500">2 hours ago</span>
+      </div>
+      <p class="mt-2 text-gray-700">
+        You have a new message from John Doe. Click here to read it.
+      </p>
+    </div>
+    <!-- Notification Card 2 -->
+    <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold">Update Available</h2>
+        <span class="text-sm text-gray-500">1 day ago</span>
+      </div>
+      <p class="mt-2 text-gray-700">
+        A new update for your project is available. Please review the changes.
+      </p>
+    </div>
+    <!-- Additional notifications can be added in similar card layout -->
+  </div>
 </div>
 {% endblock %}
