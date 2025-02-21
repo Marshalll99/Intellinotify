@@ -1,12 +1,13 @@
 # data_engine/models.py
 
 from django.db import models
-from urllib.parse import urlparse  # Add this import
+from urllib.parse import urlparse  # To extract the domain
 
 class Notification(models.Model):
     title = models.CharField(max_length=255)
-    url = models.CharField(max_length=500)  # Use URLField if you prefer
-    created_at = models.DateTimeField(auto_now_add=True)
+    url = models.CharField(max_length=500)  # Consider using URLField if desired.
+    created_at = models.DateTimeField(auto_now_add=True)  # Time of scraping
+    published_at = models.DateTimeField(null=True, blank=True)  # Actual publishing date from website
 
     @property
     def base_url(self):

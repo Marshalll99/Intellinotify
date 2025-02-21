@@ -1,18 +1,15 @@
-# data_engine/scraper.py
-
 import requests
 from bs4 import BeautifulSoup
 from .models import Notification
 from urllib.parse import urljoin
-from datetime import datetime
 
 def scrap(url):
     """
     Scrapes data from the given URL and saves notifications to the database.
     """
-    notifications = []  # Initialize notifications list
-
-    if url == "https://www.cusrinagar.edu.in/Notification/NotificationListPartial":
+    notifications = []  # Ensure 'notifications' is always initialized
+    
+    if url == "https://www.cusrinagar.edu.in/Notification/NotificationListPartia":
         base_url = "https://www.cusrinagar.edu.in"
         form_data = {
             'parameter[PageInfo][PageNumber]': 1,
@@ -23,7 +20,12 @@ def scrap(url):
             'otherParam1': ''
         }
         
+        
         response = requests.post(url, data=form_data)
+        # print("Response Content (first 500 chars):", response.content[:500])  # Print preview of response content
+        # print(f"Status Code: {response.status_code}")
+        # print(f"Response Headers: {response.headers}")
+        # print(f"Response Content (first 1000 chars): {response.content[:1000]}")
         html_doc = response.content
         soup = BeautifulSoup(html_doc, 'html.parser')
         
@@ -31,29 +33,15 @@ def scrap(url):
         count = 0
         for i, link in enumerate(data):
             title = link["title"]
-            # Use urljoin to create an absolute URL from the base and the link's href.
-            href = urljoin(base_url, link["href"])
-            
-            # Attempt to get a published date from an attribute (if available).
-            # This assumes the element might have a 'data-published' attribute.
-            published_date_str = link.get("data-published")  
-            if published_date_str:
-                try:
-                    # Adjust the format as per the actual data format.
-                    published_at = datetime.strptime(published_date_str, '%Y-%m-%d %H:%M:%S')
-                except Exception as e:
-                    published_at = None
-            else:
-                published_at = None
-
+            href = base_url + link["href"]
+            # Print for debugging purposes
             print(f"{i+1}. {title} - {href}")
             
-            # Create and save a Notification instance with the published date (if found)
-            Notification.objects.create(title=title, url=href, published_at=published_at)
+            # Create and save a Notification instance
+            Notification.objects.create(title=title, url=href)
             count += 1
 
         return f"Scraped and saved {count} notifications from {url}"
-    
     elif url == "https://www.nta.ac.in/NoticeBoardArchive":
         base_url = "https://www.nta.ac.in"
         response = requests.get(url)
@@ -65,19 +53,24 @@ def scrap(url):
     count = 0
     for item in notifications:
         notification_text = item.get_text(strip=True)
-        a_tag = item.find('a', href = True)
-        if a_tag:
+        a_tag = item.find('a')
+        if a_tag and a_tag.has_attr('href'):
             notification_href = a_tag['href']
             notification_href = urljoin(base_url, notification_href)
         else:
-            notification_href = ""
+            notification_href = ""  #
         print(f"Notification: {notification_text}")
         if notification_href:
             print(f"Link: {notification_href}")
         
-        # For this branch, no published date is scraped; it remains None.
         Notification.objects.create(title=notification_text, url=notification_href)
         count += 1
 
     return f"Scraped and saved {count} notifications from {url}"
-
+        # for item in data:
+        #     print ( item.text)
+        # return "Scraped and saved notifications from NTA"
+        # # print (data)
+        # # return "Scraped and saved notifications from NTA"
+    
+# scrap("https://www.nta.ac.in/NoticeBoardArchive")

@@ -16,16 +16,10 @@
             <div class="bg-white p-6 rounded-lg shadow hover:shadow-xl transition duration-300">
               <div class="flex justify-between items-center">
                 <h3 class="text-xl font-semibold">{{ notification.title }}</h3>
-                <span class="text-sm text-gray-500">
-                  {% if notification.published_at %}
-                    {{ notification.published_at|timesince }} ago
-                  {% else %}
-                    {{ notification.created_at|timesince }} ago
-                  {% endif %}
-                </span>
+                <span class="text-sm text-gray-500">{{ notification.created_at|timesince }} ago</span>
               </div>
               <p class="mt-2 text-gray-700">
-                <a href="{{ notification.url }}" target="_blank" class="text-blue-600 hover:underline">
+                <a href="{{ notification.url }}" class="text-blue-600 hover:underline">
                   View Details
                 </a>
               </p>
