@@ -10,7 +10,6 @@ def scrap(url):
     Scrapes data from the given URL and saves notifications to the database.
     """
     if url == "https://www.cusrinagar.edu.in/Notification/NotificationListPartial":
-        # -- CUS Srinagar branch remains unchanged --
         base_url = "https://www.cusrinagar.edu.in"
         form_data = {
             'parameter[PageInfo][PageNumber]': 1,
@@ -28,7 +27,7 @@ def scrap(url):
         for i, link in enumerate(data):
             title = link["title"]
             href = urljoin(base_url, link["href"])
-            published_date_str = link.get("data-published")
+            published_date_str = link.get("data-published")  
             if published_date_str:
                 try:
                     published_at = datetime.strptime(published_date_str, '%Y-%m-%d %H:%M:%S')
@@ -48,26 +47,34 @@ def scrap(url):
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Get full titles from <content> tags with the given style.
-        title_elements = soup.find_all('content', style="color:#012B55")
-        # Get PDF links from <a> tags that end with .pdf.
-        pdf_links = [a for a in soup.find_all('a', href=True) 
-                     if a['href'].strip().lower().endswith('.pdf')]
+        # Look for all <a> tags with href that ends with .pdf (assumed to be notifications)
+        pdf_links = [a for a in soup.find_all('a', href=True) if a['href'].strip().lower().endswith('.pdf')]
         
-        # Zip the two lists; assume that they correspond in order.
-        notifications = list(zip(title_elements, pdf_links))[:20]
+        # If no PDF links are found, log a message for debugging
+        if not pdf_links:
+            print("No PDF links found using href filter; trying alternative approach.")
+            pdf_links = soup.find_all('a', href=True)
+        
+        notifications = pdf_links[:20]  # Limit to first 20 notifications
         
         count = 0
-        for title_elem, link in notifications:
-            # Use the text from the <content> tag for the notification title.
-            title = title_elem.get_text(strip=True)
-            # Get the href from the <a> tag and build an absolute URL.
-            href = link.get('href', '').strip()
-            absolute_href = urljoin(base_url, href) if href else ""
+        for item in notifications:
+            notification_text = item.get_text(strip=True)
+            notification_href = item.get('href', '').strip()
+            if notification_href:
+                # Build absolute URL from base_url and relative href.
+                absolute_href = urljoin(base_url, notification_href)
+            else:
+                absolute_href = ""
             
-            print(f"Notification: {title}")
+            # If no title is provided, use the filename as a fallback.
+            if not notification_text:
+                notification_text = os.path.basename(absolute_href)
+            
+            print(f"Notification: {notification_text}")
             print(f"Link: {absolute_href}")
-            Notification.objects.create(title=title, url=absolute_href)
+            
+            Notification.objects.create(title=notification_text, url=absolute_href)
             count += 1
 
         return f"Scraped and saved {count} notifications from {url}"
