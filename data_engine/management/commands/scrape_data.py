@@ -6,8 +6,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         urls = [
-            "https://www.cusrinagar.edu.in/Notification/NotificationListPartial",
-            "https://www.nta.ac.in/NoticeBoardArchive"
+            "https://www.nta.ac.in/NoticeBoardArchive",
+            "https://www.cusrinagar.edu.in/Notification/NotificationListPartial"
         ]
 
         for url in urls:
