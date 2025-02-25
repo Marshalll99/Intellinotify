@@ -60,7 +60,7 @@ def scrap(url):
         # Get PDF links from <a> tags that end with .pdf.
         pdf_links = [a for a in soup.find_all('a', href=True) if a['href'].strip().lower().endswith('.pdf')]
         # Pair titles and links (assuming they correspond in order) and limit to 20.
-        notifications = list(zip(title_elements, pdf_links))[:20]
+        notifications = list(zip(title_elements, pdf_links))[2:22]
     
         count = 0
         for title_elem, link in notifications:
