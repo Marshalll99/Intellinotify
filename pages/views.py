@@ -24,8 +24,8 @@ def signup(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             print("DEBUG: Email entered by user:", form.cleaned_data.get("email"))  # Debugging
-            user = form.save(commit=True)  # Save with commit=True
-            login(request, user)  # Log the user in after signup
+            user = form.save(commit=True)  
+            login(request, user)  
             return redirect('home')
         else:
             print("DEBUG: Form errors:", form.errors)  # Debugging
