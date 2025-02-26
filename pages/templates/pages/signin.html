@@ -1,0 +1,23 @@
+{% extends "pages/base.html" %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold mb-6 text-center">Sign In</h2>
+<form method="post" class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-lg">
+    {% csrf_token %}
+    
+    {{ form.as_p }}
+
+    <!-- Forgot Password Link below password field -->
+    <p class="text-right">
+        <a href="{% url 'password_reset' %}" class="text-blue-600 text-sm hover:underline">
+            Forgot Password?
+        </a>
+    </p>
+
+    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+        Sign In
+    </button>
+</form>
+{% endblock %}

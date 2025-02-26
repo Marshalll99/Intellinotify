@@ -23,9 +23,16 @@
         </nav>
         <!-- Auth Links -->
         <div class="space-x-4">
-          <a href="{% url 'signup' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign Up</a>
-          <a href="{% url 'signin' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign In</a>
-        </div>
+          {% if user.is_authenticated %}
+              <form action="{% url 'logout' %}" method="post" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="text-lg font-semibold hover:text-red-600 transition duration-300">Log Out</button>
+              </form>
+          {% else %}
+              <a href="{% url 'signup' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign Up</a>
+              <a href="{% url 'signin' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign In</a>
+          {% endif %}
+      </div>
       </div>
     </header>
 

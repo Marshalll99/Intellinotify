@@ -1,0 +1,37 @@
+{% extends "pages/base.html" %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<h2 class="text-3xl font-bold mb-6 text-center">Sign Up</h2>
+<form method="post" class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-lg">
+    {% csrf_token %}
+    
+    <p>
+        <label for="{{ form.username.id_for_label }}">Username:</label>
+        {{ form.username }}
+    </p>
+    
+    <p>
+        <label for="{{ form.email.id_for_label }}">Email:</label>
+        <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
+               class="border p-2 w-full rounded-lg" placeholder="Enter your email" required>
+    </p>
+    
+    
+    <p>
+        <label for="{{ form.password1.id_for_label }}">Password:</label>
+        {{ form.password1 }}
+    </p>
+    
+    <p>
+        <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
+        {{ form.password2 }}
+    </p>
+    
+    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">
+        Sign Up
+    </button>
+
+</form>
+{% endblock %}
