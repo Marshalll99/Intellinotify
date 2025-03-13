@@ -7,6 +7,38 @@
     {% load static %}
     <!-- Link to compiled Tailwind CSS -->
     <link href="{% static 'css/dist/styles.css' %}" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+      /* Chatbot Floating Button */
+      .chatbot-button {
+        position: fixed;
+        bottom: 20px; /* Adjust the height */
+        right: 20px; /* Move to the right */
+        background-color: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out;
+        z-index: 1000; /* Ensure it appears above other elements */
+      }
+
+      .chatbot-button img {
+        width: 40px; /* Set the chatbot logo size */
+        height: 40px;
+      }
+
+      .chatbot-button:hover {
+        transform: scale(1.1);
+      }
+
+      /* Hide chatbot on signup & signin pages */
+    </style>
+    {% block extra_css %}{% endblock %}
   </head>
   <body class="bg-gradient-to-br from-gray-50 to-white text-gray-800">
     <!-- Header / Navigation -->
@@ -41,6 +73,13 @@
       {% block content %}
       {% endblock %}
     </main>
+
+    <!-- Floating Chatbot Button (Hidden on Sign Up & Sign In) -->
+    {% if request.resolver_match.url_name != 'signup' and request.resolver_match.url_name != 'signin' %}
+      <a href="{% url 'chat' %}" class="chatbot-button" title="Chat with us">
+        <img src="{% static 'pages/images/chatbot-icon.png' %}" alt="Chatbot" />
+      </a>
+    {% endif %}
 
     <!-- Footer -->
     <footer class="bg-gray-100">

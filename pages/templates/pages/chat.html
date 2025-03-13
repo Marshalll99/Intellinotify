@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotifiAI Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+
+    <!-- Header & Navigation (Extracted from base.html) -->
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="text-3xl font-bold text-blue-600">
+                INTELLINOTIFY
+            </a>
+            <!-- Navigation Menu -->
+            <nav class="space-x-6">
+                <a href="{% url 'home' %}" class="text-lg hover:text-blue-600 transition duration-300">Home</a>
+                <a href="{% url 'notifications' %}" class="text-lg hover:text-blue-600 transition duration-300">Notifications</a>
+            </nav>
+            <!-- Auth Links -->
+            <div class="space-x-4">
+                {% if user.is_authenticated %}
+                    <form action="{% url 'logout' %}" method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-lg font-semibold hover:text-red-600 transition duration-300">Log Out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'signup' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign Up</a>
+                    <a href="{% url 'signin' %}" class="text-lg font-semibold hover:text-blue-600 transition duration-300">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-col h-full">
+        <!-- Chat Header -->
+        <div class="bg-blue-600 text-white text-center py-4 text-lg font-bold">
+            NotifiAI Chatbot
+        </div>
+
+        <!-- Chat Box -->
+        <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Messages will be dynamically added here -->
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-4 flex items-center bg-white border-t">
+            <textarea id="user-input"
+                      placeholder="Type your message..."
+                      class="flex-1 resize-none border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="1"
+                      onkeydown="handleKeyPress(event)">
+            </textarea>
+            <button onclick="sendMessage()" class="ml-3 text-blue-600">
+                <!-- Send Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.75 12l14.5-7.5-14.5 7.5 14.5 7.5-14.5-7.5z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = $("#user-input").val().trim();
+            if (userInput === "") return;
+
+            $("#chat-box").append(`
+                <div class="flex justify-end">
+                    <div class="bg-green-200 text-gray-900 p-2 rounded-lg max-w-xs md:max-w-md">${userInput}</div>
+                </div>
+            `);
+
+            $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+            $("#user-input").val("");
+
+            $.ajax({
+                type: "POST",
+                url: "{% url 'chatbot_query' %}",
+                data: JSON.stringify({ query: userInput }),
+                contentType: "application/json",
+                success: function(response) {
+                    let botResponse = response.response;
+                    $("#chat-box").append(`
+                        <div class="flex justify-start">
+                            <div class="bg-gray-300 text-gray-900 p-2 rounded-lg max-w-xs md:max-w-md">${botResponse}</div>
+                        </div>
+                    `);
+                    $("#chat-box").scrollTop($("#chat-box")[0].scrollHeight);
+                },
+                error: function() {
+                    $("#chat-box").append(`
+                        <div class="flex justify-start">
+                            <div class="bg-red-200 text-red-900 p-2 rounded-lg max-w-xs md:max-w-md">Sorry, an error occurred.</div>
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+    </script>
+
+</body>
+</html>
