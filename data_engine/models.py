@@ -24,3 +24,7 @@ class RecentEmail(models.Model):
 
     def __str__(self):
         return f"Email from {self.sender} at {self.received_at}"
+
+class ScraperChoice(models.Model):
+    url = models.URLField(unique=True)
+    tool = models.CharField(max_length=20, choices=[("scrapy", "Scrapy"), ("playwright", "Playwright")])
