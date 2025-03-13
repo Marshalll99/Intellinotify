@@ -1,83 +1,67 @@
+import scrapy
+from playwright.sync_api import sync_playwright
+from data_engine.models import ScraperChoice
+from data_engine.pdf_handler import extract_text_from_pdf
 import requests
-from bs4 import BeautifulSoup
-from .models import Notification
-from urllib.parse import urljoin
-from datetime import datetime
-import os
+import mimetypes
 
-def scrap(url):
-    """
-    Scrapes data from the given URL and saves notifications to the database.
-    """
-    if url == "https://www.cusrinagar.edu.in/Notification/NotificationListPartial":
-        base_url = "https://www.cusrinagar.edu.in"
-        form_data = {
-            'parameter[PageInfo][PageNumber]': 1,
-            'parameter[PageInfo][PageSize]': 50,
-            'parameter[PageInfo][DefaultOrderByColumn]': 'CreatedOn',
-            'parameter[SortInfo][ColumnName]': '',
-            'parameter[SortInfo][OrderBy]': 1,
-            'otherParam1': ''
-        }
+class UniversalScraper:
+    def __init__(self, url):
+        self.url = url
+        self.tool = self.get_scraping_tool(url)
+
+    def get_scraping_tool(self, url):
+        """Check DB for previous tool choice; use Scrapy by default."""
+        choice = ScraperChoice.objects.filter(url=url).first()
+        return choice.tool if choice else "scrapy"
+
+    def update_tool_choice(self, tool):
+        """Save best tool choice in DB for future scraping."""
+        ScraperChoice.objects.update_or_create(url=self.url, defaults={"tool": tool})
+
+    def scrape_with_scrapy(self):
+        """Scrapes content using Scrapy."""
+        class ScraperSpider(scrapy.Spider):
+            name = "scraper"
+            start_urls = [self.url]
+
+            def parse(self, response):
+                return response.text
+
+        from scrapy.crawler import CrawlerProcess
+        process = CrawlerProcess(settings={"LOG_ENABLED": False})
+        process.crawl(ScraperSpider)
+        process.start()
+
+        return ScraperSpider.parse
+
+    def scrape_with_playwright(self):
+        """Scrapes content using Playwright."""
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(self.url)
+            content = page.content()
+            browser.close()
+            return content
+
+    def detect_pdf(self, response_text):
+        """Checks if the scraped content is a PDF link."""
+        if "application/pdf" in response_text or self.url.endswith(".pdf"):
+            return True
+        return False
+
+    def run_scraper(self):
+        """Decides whether to use Scrapy or Playwright based on data quality."""
+        content = self.scrape_with_scrapy() if self.tool == "scrapy" else self.scrape_with_playwright()
+
+        if not content.strip():
+            self.tool = "playwright" if self.tool == "scrapy" else "scrapy"
+            self.update_tool_choice(self.tool)
+            content = self.scrape_with_playwright() if self.tool == "playwright" else self.scrape_with_scrapy()
+
+        if self.detect_pdf(content):
+            pdf_text = extract_text_from_pdf(self.url)
+            return pdf_text
         
-        response = requests.post(url, data=form_data)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        rows = soup.select("tbody tr")  
-        count = 0
-        for i, row in enumerate(rows):
-            tds = row.find_all("td")
-            posting_date_str = tds[1].get_text(strip=True)
-            try:
-                published_at = datetime.strptime(posting_date_str, "%d-%B-%Y")
-            except Exception:
-                published_at = None
-            
-            link = tds[2].find("a", title=True)
-            if link:
-                title = link["title"]
-                href = urljoin(base_url, link["href"])
-            else:
-                title = tds[0].get_text(strip=True)
-                href = base_url
-
-            print(f"{i+1}. {title} - {href}")
-            Notification.objects.create(title=title, url=href, published_at=published_at)
-            count += 1
-
-        return f"Scraped and saved {count} notifications from {url}"
-
-    
-    elif url == "https://www.nta.ac.in/NoticeBoardArchive":
-        base_url = "https://www.nta.ac.in"
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
-        title_elements = soup.find_all('content', style="color:#012B55")
-        pdf_links = [a for a in soup.find_all('a', href=True) if a['href'].strip().lower().endswith('.pdf')]
-        notifications = list(zip(title_elements, pdf_links))[2:22]
-    
-        count = 0
-        for title_elem, link in notifications:
-            title = title_elem.get_text(strip=True)
-            href = link.get('href', '').strip()
-            absolute_href = urljoin(base_url, href) if href else ""
-            
-            published_at = None
-            if absolute_href:
-                try:
-                    underscore_index = absolute_href.rfind('_')
-                    dot_index = absolute_href.lower().rfind('.pdf')
-                    if underscore_index != -1 and dot_index != -1 and dot_index > underscore_index:
-                        date_time_str = absolute_href[underscore_index+1:dot_index]
-                        date_str = date_time_str[:8]
-                        published_at = datetime.strptime(date_str, '%Y%m%d')
-                except Exception as e:
-                    published_at = None
-            
-            print(f"Notification: {title}")
-            print(f"Link: {absolute_href}")
-            print(f"Published Date: {published_at}")
-            
-            Notification.objects.create(title=title, url=absolute_href, published_at=published_at)
-            count += 1
-
-        return f"Scraped and saved {count} notifications from {url}"
+        return content
