@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Notification, RecentEmail
+from .models import Notification, RecentEmail, ScraperChoice, ScheduledNotificationRequest
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
@@ -8,3 +8,14 @@ class NotificationAdmin(admin.ModelAdmin):
 @admin.register(RecentEmail)
 class RecentEmailAdmin(admin.ModelAdmin):
     list_display = ("subject", "sender", "received_at")
+
+@admin.register(ScraperChoice)
+class ScraperChoiceAdmin(admin.ModelAdmin):
+    list_display = ("url", "tool")
+
+@admin.register(ScheduledNotificationRequest)
+class ScheduledNotificationRequestAdmin(admin.ModelAdmin):
+    list_display = ("domain_or_url", "notification_name", "active")
+    list_filter = ("active",)
+    search_fields = ("domain_or_url", "notification_name")
+    date_hierarchy = "created_at"                
