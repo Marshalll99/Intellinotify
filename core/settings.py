@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'theme',
     'pages',
     'data_engine',
+    'django_crontab',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +48,26 @@ TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
+
+CRONJOBS = [
+    # Run the job every 12 hours, or adjust to 2x a day
+    ('0 */12 * * *', 'data_engine.cron.check_scheduled_requests'),
+]
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'check-scheduled-requests-twice-a-day': {
+        'task': 'data_engine.tasks.check_scheduled_requests',
+        'schedule': crontab(hour='*/12'),  # every 12 hours
+    },
+}
+
+
+
 
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "home"

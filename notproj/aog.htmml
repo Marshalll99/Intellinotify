@@ -7,34 +7,6 @@
     <title>NotifiAI Chatbot</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        // CSRF token setup: get the token from the browser's cookies and attach it to AJAX requests.
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    // Check if this cookie string begins with the name we want.
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        const csrftoken = getCookie('csrftoken');
-
-        // Setup jQuery AJAX to include CSRF token in the headers for non-GET requests.
-        $.ajaxSetup({
-            beforeSend: function(xhr, settings) {
-                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                }
-            }
-        });
-    </script>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
 
@@ -99,7 +71,7 @@
             if (userInput === "") return;
 
             $("#chat-box").append(`
-                <div class="flex items-center">
+                <div class="flex justify-start">
                     <div class="bg-green-200 text-gray-900 p-2 rounded-lg max-w-xs md:max-w-md">${userInput}</div>
                 </div>
             `);
@@ -115,7 +87,7 @@
                 success: function(response) {
                     let botResponse = response.response;
                     $("#chat-box").append(`
-                        <div class="flex justify-end">
+                        <div class="flex justify-start">
                             <div class="bg-gray-300 text-gray-900 p-2 rounded-lg max-w-xs md:max-w-md">${botResponse}</div>
                         </div>
                     `);
@@ -141,3 +113,79 @@
 
 </body>
 </html>
+
+
+
+
+
+
+    def chatbot_query(request):
+        """Handles chatbot queries, triggers Google Search, scraping, and AI processing."""
+        if request.method == "POST":
+            # Try to parse JSON from request.body first
+            try:
+                body_data = json.loads(request.body)
+                query = body_data.get("query", "").strip()
+            except json.JSONDecodeError:
+                # If JSON parse fails, fallback to request.POST
+                query = request.POST.get("query", "").strip()
+
+            if not query:
+                return JsonResponse({"error": "Query cannot be empty"}, status=400)
+
+            # 1️⃣ Generate Google Search results
+            search_results = get_google_search_results(query)
+            if not search_results:
+                return JsonResponse({"error": "No search results found."}, status=400)
+
+            best_url = search_results[0]["link"]  # Pick top result
+
+            # 2️⃣ Scrape the best result
+            scraper = UniversalScraper(best_url)
+            scraped_content = scraper.run_scraper()
+
+            # 3️⃣ AI Summarization
+            final_response = query_ai(f"Summarize the following information: {scraped_content}")
+
+            return JsonResponse({"response": final_response})
+
+        return JsonResponse({"error": "Invalid request"}, status=400)
+
+
+    <!-- data_engine/google_search.py: -->
+
+    import scrapy
+    from scrapy.crawler import CrawlerProcess
+
+    class GoogleSearchSpider(scrapy.Spider):
+        name = "google_search"
+
+        def __init__(self, query=None, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            formatted_query = query.replace(" ", "+") if query else ""
+            self.start_urls = [f"https://www.google.com/search?q={formatted_query}"]
+            self.results = []  # We'll store final results here
+
+        def parse(self, response):
+            for item in response.css("div.tF2Cxc"):
+                title = item.css("h3::text").get()
+                link = item.css("a::attr(href)").get()
+                # Filter out ads or special google.com links
+                if title and link:
+                    if "google.com" not in link and "/aclk?" not in link and "adurl=" not in link:
+                        self.results.append({"title": title, "link": link})
+
+    def get_google_search_results(query):
+        """Runs the GoogleSearchSpider and returns its organic results."""
+        process = CrawlerProcess(settings={"LOG_ENABLED": False})
+        # Pass the SPIDER CLASS, plus constructor kwargs:
+        process.crawl(GoogleSearchSpider, query=query)
+        process.start()  # This blocks until the crawl is done
+
+        # Once done, retrieve the actual spider instance from process.crawlers:
+        for crawler in process.crawlers:
+            spider = crawler.spider
+            if isinstance(spider, GoogleSearchSpider):
+                return spider.results
+
+        return []  # If somehow we didn't find our spider
