@@ -1,4 +1,4 @@
-import json, re
+import json, re, threading
 from collections import defaultdict
 from django.shortcuts import render, redirect
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -44,15 +44,37 @@ def signin(request):
         form = AuthenticationForm()
     return render(request, 'pages/signin.html', {"form": form})
 
+def run_full_scraper(domain, notification_name, user):
+    """
+    Full heavy scraping happening here without blocking chatbot.
+    """
+    from data_engine.models import ScheduledNotificationRequest
+    from django.core.mail import send_mail
+    from django.conf import settings
+
+    summary = scrape_notification(domain, notification_name)
+
+    if summary and summary != "❌ Notification not found.":
+        req = ScheduledNotificationRequest.objects.filter(
+            user=user,
+            domain_or_url=domain,
+            notification_name=notification_name,
+            active=True
+        ).first()
+        if req:
+            req.active = False
+            req.save()
+
+        if user and user.email:
+            send_mail(
+                f"✅ Notification Found: {notification_name}",
+                summary,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=True,
+            )
+
 def chatbot_query(request):
-    """
-    This view processes user queries. It first asks the AI to classify the intent
-    in structured JSON. If the AI determines that the user wants a specific website 
-    notification (e.g. "Admit Card 2025" from example.edu), we try to retrieve a full 
-    summary immediately via our Celery task. If a valid summary is found, it is returned.
-    Otherwise, we schedule an alert so that when the notification becomes available,
-    the user will be notified via email.
-    """
     if request.method == "POST":
         try:
             body_data = json.loads(request.body)
@@ -63,7 +85,6 @@ def chatbot_query(request):
         if not user_message:
             return JsonResponse({"response": "Please enter a message."}, status=400)
 
-        # Step 1: Ask AI for intent using a structured JSON prompt.
         prompt_for_intent = f"""
 You are an assistant that must decide between two modes:
 - For normal chat, output exactly: {{"intent": "chat", "answer": "your normal answer"}}
@@ -73,55 +94,52 @@ Do not output any extra text.
 User message: "{user_message}"
 """
         ai_intent_raw = query_ai(prompt_for_intent).strip()
+        print(f"AI Intent: {ai_intent_raw}")
 
         try:
             ai_intent = json.loads(ai_intent_raw)
         except Exception as e:
-            # Fallback to normal chat if parsing fails.
             fallback_answer = query_ai(user_message)
+            print(f"AI Intent Parsing Error: {e}")
             return JsonResponse({"response": fallback_answer})
 
         if ai_intent.get("intent") == "chat":
+            print(f"AI Chat Response: {ai_intent.get('answer')}")
             return JsonResponse({"response": ai_intent.get("answer", "I'm here to help!")})
+
         elif ai_intent.get("intent") == "notification":
             domain = ai_intent.get("domain", "").strip()
             notification_name = ai_intent.get("notification_name", "Specific Notification").strip()
+            print(f"AI Notification Domain: {domain}")
+            print(f"AI Notification Name: {notification_name}")
+
             if not domain:
                 fallback_answer = query_ai(user_message)
                 return JsonResponse({"response": fallback_answer})
-            # Attempt immediate scraping by calling our Celery task and waiting up to 30 seconds.
-            try:
-                summary = scrape_notification.delay(domain, notification_name).get(timeout=30)
-            except Exception as e:
-                summary = ""
 
-            if summary and summary != "NOT FOUND":
-                # Return the summary as the response.
-                return JsonResponse({"response": summary})
+            # Start full scraping in a background thread immediately
+            if request.user.is_authenticated:
+                ScheduledNotificationRequest.objects.update_or_create(
+                    user=request.user,
+                    domain_or_url=domain,
+                    notification_name=notification_name,
+                    defaults={"active": True}
+                )
+
+                threading.Thread(target=run_full_scraper, args=(domain, notification_name, request.user)).start()
+
             else:
-                # If nothing valid was retrieved, store a scheduled alert.
-                if request.user.is_authenticated:
-                    ScheduledNotificationRequest.objects.update_or_create(
-                        user=request.user,
-                        domain_or_url=domain,
-                        notification_name=notification_name,
-                        defaults={"active": True}
-                    )
-                    return JsonResponse({
-                        "response": (
-                            f"We couldn't procure '{notification_name}' from {domain} right now. "
-                            "We'll monitor the site and email you once the complete information is available."
-                        )
-                    })
-                else:
-                    return JsonResponse({
-                        "response": (
-                            f"We couldn't procure '{notification_name}' from {domain} at the moment. "
-                            "Please provide your email so we can notify you when it becomes available."
-                        )
-                    })
+                # Unauthenticated users won't receive email notifications
+                threading.Thread(target=run_full_scraper, args=(domain, notification_name, None)).start()
+
+            # Immediate polite fallback
+            fallback_message = (
+                f"📢 We’re checking for '{notification_name}' on {domain} right now. "
+                "Please stay tuned — we'll notify you once the update is found!"
+            )
+            return JsonResponse({"response": fallback_message})
+
         else:
-            # Fallback if the AI's response doesn't match expected structure.
             fallback_answer = query_ai(user_message)
             return JsonResponse({"response": fallback_answer})
 

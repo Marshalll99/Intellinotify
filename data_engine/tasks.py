@@ -1,59 +1,60 @@
+
+import re
 from celery import shared_task
 from django.conf import settings
-from data_engine.google_search import get_google_search_results
-from data_engine.scraper import UniversalScraper
-from data_engine.ai_query import query_ai
 from django.core.mail import send_mail
-from data_engine.models import ScheduledNotificationRequest
 from django.db import transaction
+from data_engine.scraper import UniversalScraper #scrap UniversalScraper
+from data_engine.ai_query import query_ai
+from data_engine.models import ScheduledNotificationRequest
 
 @shared_task
 def scrape_notification(domain_or_url, notification_name):
-    """
-    1) Google search for 'domain_or_url + notification'
-    2) Scrape best link
-    3) Pass content to AI to see if the specific notification_name is there
-    4) Return the snippet if found
-    """
-    # 1) Google Search
-    results = get_google_search_results(domain_or_url)
-    if not results:
-        return ""
+    print(f"Scraping: {notification_name} from {domain_or_url}")
 
-    best_url = results[0]["link"]
-    scraper = UniversalScraper(best_url)
-    scraped_content = scraper.run_scraper()
+    scraper = UniversalScraper(domain_or_url, notification_name)
+    html_text, pdf_links = scraper.run_scraper()
+    print(f"→ Text length: {len(html_text)} chars, PDFs: {pdf_links}")
 
-    # 2) Let AI see if it contains the user’s desired notification
-    prompt = f"""
-    The user wants the specific notification: '{notification_name}' 
-    from the domain: {domain_or_url}.
-    Below is the scraped text:
-    {scraped_content}
+    snippet, pdf_url = scraper.find_notification(notification_name)
 
-    If you find that specific notification info, output it exactly.
-    If not found, output 'NOT FOUND'.
-    """
-    snippet = query_ai(prompt).strip()
-    return snippet
+    if snippet:
+        prompt = f"""
+Below is a part of content scraped from {domain_or_url} related to user's query "{notification_name}":
+
+\"\"\"
+{snippet}
+\"\"\"
+
+Please do the following:
+- If the information matches the notification "{notification_name}", write a short clear human-like summary.
+- If the information is partially related, still write a helpful and positive update.
+- Never say "NOT FOUND."
+- Always be confident and encourage that updates are being monitored.
+
+Respond only the final summary to show to the user.
+"""
+        print("→ Prompting AI for Summary...")
+        summary = query_ai(prompt).strip()
+        print("→ AI says:", summary)
+
+        return summary if summary else "📢 No specific update found yet, but our system is monitoring it for you!"
+
+    if pdf_url:
+        return f"✅ Notification found inside PDF.\n\n🔗 PDF Link: {pdf_url}"
+
+    return "📢 Notification not fully available yet, but monitoring has started."
 
 @shared_task
 def check_scheduled_requests():
-    """
-    Called periodically (e.g. Celery beat) to see if previously-unfound 
-    notifications are now available.
-    """
     with transaction.atomic():
-        active_reqs = ScheduledNotificationRequest.objects.select_for_update().filter(active=True)
-        for req in active_reqs:
-            snippet = scrape_notification(domain_or_url=req.domain_or_url, 
-                                          notification_name=req.notification_name)
-            if snippet and snippet != "NOT FOUND":
-                # We found the notification
+        for req in ScheduledNotificationRequest.objects.select_for_update().filter(active=True):
+            res = scrape_notification(req.domain_or_url, req.notification_name)
+            if res and not res.startswith("📢 Notification not fully available yet"):
                 if req.user and req.user.email:
                     send_mail(
                         subject=f"Notification Found: {req.notification_name}",
-                        message=f"We found your notification:\n\n{snippet}",
+                        message=res,
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[req.user.email],
                         fail_silently=True,

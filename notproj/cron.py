@@ -1,5 +1,5 @@
 from data_engine.models import ScheduledNotificationRequest
-from data_engine.scraper import UniversalScraper
+from Notifier.scraper import UniversalScraper
 from data_engine.ai_query import query_ai
 from django.core.mail import send_mail
 from django.conf import settings

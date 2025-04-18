@@ -253,3 +253,7 @@ python manage.py createsuperuser
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+python populate_notification_pages.py
+
+python manage.py scrape_data  

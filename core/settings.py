@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,8 +78,10 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "mmarshall7795@gmail.com"  
-EMAIL_HOST_PASSWORD = "odjx fhfg donx eguh"  
+# EMAIL_HOST_USER = "mmarshall7795@gmail.com"  
+# EMAIL_HOST_PASSWORD = "odjx fhfg donx eguh" 
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD') 
 
 EMAIL_FAIL_SILENTLY = False  # This forces Django to show errors instead of failing silently
 
@@ -184,3 +188,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+GOOGLE_API_KEY = config('GOOGLE_API_KEY')
+CSE_ID = config('GOOGLE_CSE_ID')

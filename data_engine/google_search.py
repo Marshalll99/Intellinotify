@@ -1,40 +1,26 @@
-import scrapy
-from scrapy.crawler import CrawlerRunner
-import crochet
+# data_engine/google_search.py
 
-crochet.setup()
+import requests
+from django.conf import settings
 
-class GoogleSearchSpider(scrapy.Spider):
-    name = "google_search"
-    results = []
+def google_search_top_url(domain):
+    query = f"site:{domain} notifications"
+    url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={settings.GOOGLE_API_KEY}&cx={settings.CSE_ID}"
 
-    def __init__(self, query=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Force "notification" in the query
-        full_query = f"{query} notification".replace(" ", "+")
-        self.start_urls = [f"https://www.google.com/search?q={full_query}"]
-        self.results = []
+    try:
+        response = requests.get(url, timeout=15)
+        if response.status_code == 200:
+            results = response.json().get("items", [])
+            for item in results:
+                link = item.get("link", "")
+                if any(word in link.lower() for word in ["notification", "notice", "news", "updates"]):
+                    print(f"✅ Best notification page found by search: {link}")
+                    return link
+            if results:
+                print(f"🟠 No clean match, fallback to first result: {results[0]['link']}")
+                return results[0]['link']
+    except Exception as e:
+        print(f"Google Search Error: {e}")
 
-    def parse(self, response):
-        for result in response.css("div.tF2Cxc"):
-            title = result.css("h3::text").get()
-            link = result.css("a::attr(href)").get()
-            if title and link:
-                if "google.com" not in link and "/aclk?" not in link and "adurl=" not in link:
-                    self.results.append({"title": title, "link": link})
-
-from scrapy.crawler import CrawlerRunner
-runner = CrawlerRunner(settings={"LOG_ENABLED": False})
-
-@crochet.run_in_reactor
-def crawl_google(query):
-    return runner.crawl(GoogleSearchSpider, query=query)
-
-def get_google_search_results(query):
-    d = crawl_google(query)
-    d.wait()  # block until done
-    for crawler in runner.crawlers:
-        spider = crawler.spider
-        if isinstance(spider, GoogleSearchSpider):
-            return spider.results
-    return []
+    print(f"❌ No result found, fallback to domain itself: {domain}")
+    return f"https://{domain}" if not domain.startswith("http") else domain

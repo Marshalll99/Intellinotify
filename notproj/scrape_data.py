@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from data_engine.scraper import scrap
+from Notifier.scraper import scrap
 
 class Command(BaseCommand):
     help = 'Scrapes notifications from multiple websites and saves them to the database'

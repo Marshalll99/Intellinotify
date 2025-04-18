@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Notification, RecentEmail, ScraperChoice, ScheduledNotificationRequest
+from .models import Notification, RecentEmail, ScraperChoice, ScheduledNotificationRequest, NotificationPageMapping
+
+admin.site.register(NotificationPageMapping)
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
